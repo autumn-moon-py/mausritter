@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "mausritter-map-tools": {
+      "command": "node",
+      "args": ["Hexfriend/tools/mcp-server.cjs"],
+      "cwd": "/Users/mac/worker/日志/mausritter"
+    }
+  }
+}

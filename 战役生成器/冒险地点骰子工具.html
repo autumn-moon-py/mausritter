@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mausritter 冒险地点骰子工具</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; background:#fff; color:#1a1a1a; padding:10px; }
+.container { max-width:1100px; margin:0 auto; }
+.module-bar { display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:10px; font-size:0.85rem; }
+.module-bar .desc { color:#888; }
+.toggle { padding:4px 12px; background:#fff; border:1px solid #bbb; border-radius:4px; cursor:pointer; font-size:0.85rem; color:#333; }
+.toggle.active { background:#2a2a2a; color:#fff; border-color:#2a2a2a; }
+.tabs { display:flex; gap:6px; margin-bottom:10px; flex-wrap:wrap; }
+.tab { padding:6px 16px; background:#f2f2f2; border:1px solid #ddd; border-radius:4px; cursor:pointer; font-size:0.88rem; color:#555; }
+.tab:hover { background:#e8e8e8; }
+.tab.active { background:#2a2a2a; color:#fff; border-color:#2a2a2a; }
+.panel { display:none; }
+.panel.active { display:block; }
+.section { background:#f7f7f7; border:1px solid #e0e0e0; border-radius:4px; padding:12px; margin-bottom:10px; }
+.section h3 { font-size:0.9rem; margin-bottom:10px; padding-bottom:6px; border-bottom:1px solid #dcdcdc; }
+.row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:6px; }
+.label { min-width:90px; font-size:0.85rem; color:#555; }
+.die { font-weight:700; min-width:90px; text-align:center; background:#fff; border:1px solid #ddd; border-radius:4px; padding:5px 8px; font-size:0.88rem; }
+.lookup { font-size:0.83rem; color:#333; flex:1; min-width:180px; }
+.lookup.micro { border:1px dashed #aaa; }
+.btn { background:#2a2a2a; color:#fff; border:0; border-radius:4px; padding:6px 14px; font-size:0.88rem; cursor:pointer; }
+.btn:hover { background:#444; }
+.btn.ghost { background:#fff; color:#2a2a2a; border:1px solid #bbb; }
+.btn.ghost:hover { background:#eee; }
+.input-group { display:flex; gap:6px; align-items:center; }
+.input-group input { width:56px; padding:5px; background:#fff; border:1px solid #ccc; border-radius:4px; text-align:center; }
+.input-group label { font-size:0.83rem; color:#555; }
+.grid-cards { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:8px; }
+.room-card { background:#fff; border:1px solid #e0e0e0; border-radius:4px; padding:10px; }
+.room-card h4 { font-size:0.85rem; margin-bottom:8px; }
+.output { background:#f5f5f5; border:1px solid #ddd; border-radius:4px; padding:10px; margin-top:10px; white-space:pre-wrap; font-family:monospace; font-size:0.85rem; line-height:1.6; max-height:400px; overflow-y:auto; }
+.copy { margin-top:8px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="module-bar">
+    <span>可选模块：</span>
+    <button id="wc-toggle" class="toggle" onclick="toggleWC()">WC-PACK 微观风味包</button>
+    <span class="desc" id="module-desc">未加载，使用默认掷骰表</span>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('theme')">步骤1：主题与场景</div>
+    <div class="tab" onclick="switchTab('npc')">步骤2：委托人NPC</div>
+    <div class="tab" onclick="switchTab('room')">步骤3：房间生成</div>
+  </div>
+
+  <!-- 步骤1 主题 -->
+  <div id="panel-theme" class="panel active">
+    <div class="section">
+      <h3>主题与场景（一键掷骰）</h3>
+      <button class="btn" onclick="rollTheme()">一键掷骰</button>
+      <div class="row" style="margin-top:10px">
+        <span class="label">建造类型</span>
+        <button class="btn ghost" onclick="rollOne('build')">d20</button>
+        <span class="die" id="t-build">-</span>
+        <span class="lookup" id="l-build">d20</span>
+      </div>
+      <div class="row">
+        <span class="label">衰败原因</span>
+        <button class="btn ghost" onclick="rollOne('decay')">d12</button>
+        <span class="die" id="t-decay">-</span>
+        <span class="lookup" id="l-decay">d12</span>
+      </div>
+      <div class="row">
+        <span class="label">居民类型</span>
+        <button class="btn ghost" onclick="rollOne('resident')">d10</button>
+        <span class="die" id="t-resident">-</span>
+        <span class="lookup" id="l-resident">d10</span>
+      </div>
+      <div class="row">
+        <span class="label">居民目标</span>
+        <button class="btn ghost" onclick="rollOne('goal')">d8</button>
+        <span class="die" id="t-goal">-</span>
+        <span class="lookup" id="l-goal">d8</span>
+      </div>
+      <div class="row">
+        <span class="label">核心秘密</span>
+        <button class="btn ghost" onclick="rollOne('secret')">d6</button>
+        <span class="die" id="t-secret">-</span>
+        <span class="lookup" id="l-secret">d6</span>
+      </div>
+      <div class="row">
+        <span class="label">第二派系</span>
+        <button class="btn ghost" onclick="rollOne('faction')">d6</button>
+        <span class="die" id="t-faction">-</span>
+        <span class="lookup" id="l-faction">d6（与居民对立/竞争）</span>
+      </div>
+      <div class="row lookup micro" id="micro-row" style="display:none;padding:6px 8px">
+        <span class="label">微观地标 WC-1</span>
+        <button class="btn ghost" onclick="rollMicro()">d20</button>
+        <span class="die" id="t-micro">-</span>
+        <span class="lookup" id="l-micro">d20</span>
+      </div>
+    </div>
+    <div class="output" id="theme-output">点击掷骰后，结果可一键复制给AI</div>
+    <button class="btn copy" onclick="copyOutput('theme-output')">复制结果</button>
+  </div>
+
+  <!-- 步骤2 NPC -->
+  <div id="panel-npc" class="panel">
+    <div class="section">
+      <h3>委托人NPC生成</h3>
+      <button class="btn" onclick="rollNPC()">生成NPC</button>
+      <div class="row" style="margin-top:10px">
+        <span class="label">社会地位</span>
+        <button class="btn ghost" onclick="rollNPC()">d6</button>
+        <span class="die" id="n-status">-</span>
+        <span class="lookup" id="l-status">d6</span>
+      </div>
+      <div class="row">
+        <span class="label">外貌</span>
+        <span class="die" id="n-look">-</span>
+        <span class="lookup" id="l-look">d20</span>
+      </div>
+      <div class="row">
+        <span class="label">怪癖</span>
+        <span class="die" id="n-quirk">-</span>
+        <span class="lookup" id="l-quirk">d20</span>
+      </div>
+      <div class="row">
+        <span class="label">想要</span>
+        <span class="die" id="n-want">-</span>
+        <span class="lookup" id="l-want">d20</span>
+      </div>
+      <div class="row">
+        <span class="label">关系</span>
+        <span class="die" id="n-relation">-</span>
+        <span class="lookup" id="l-relation">d20</span>
+      </div>
+      <div class="row">
+        <span class="label">报酬</span>
+        <span class="die" id="n-pay">-</span>
+        <span class="lookup" id="l-pay">-</span>
+      </div>
+    </div>
+    <div class="output" id="npc-output">点击生成</div>
+    <button class="btn copy" onclick="copyOutput('npc-output')">复制结果</button>
+  </div>
+
+  <!-- 步骤3 房间 -->
+  <div id="panel-room" class="panel">
+    <div class="section">
+      <h3>房间批量生成</h3>
+      <div class="row">
+        <div class="input-group">
+          <label>房间数</label>
+          <input type="number" id="room-count" value="6" min="1" max="12">
+        </div>
+        <button class="btn" onclick="rollRooms()">生成所有房间</button>
+      </div>
+    </div>
+    <div class="grid-cards" id="room-grid"></div>
+    <div class="output" id="room-output">点击生成</div>
+    <button class="btn copy" onclick="copyOutput('room-output')">复制结果</button>
+  </div>
+</div>
+
+<script>
+const roll = s => Math.floor(Math.random()*s)+1;
+const lookup = (t,i) => t[i-1] || '未知';
+const $ = id => document.getElementById(id);
+let WC = false;
+
+const TABLES = {
+  build: ["古代蝙蝠邪教神殿","废弃已久的瞭望塔","贵族鼠的乡间庄园","隐秘的冬季储藏室","古代老鼠的墓地","兔子或狐狸挖掘的洞穴","人类的房屋或其他建筑","下水道或排水管道","令人幽闭恐惧的蚂蚁挖掘的隧道","巨大的树，由老鼠雕刻而成","巫师塔","定居点的谷物磨坊","鼠王的巢穴","巨兽的骨架","女巫学院","通往仙灵领域的门楼","深层矿坑","强盗的藏身处","天然洞穴","老鼠定居点"],
+  decay: ["洪水","魔法事故","岁月与腐朽","人类的破坏","被霉菌侵占","在领域之间偏移","被巨兽攻击","灾难性风暴","作祟的幽灵","神秘的遗弃","内部战争","疾病"],
+  resident: ["老鼠，被逼疯或绝望","老鼠，被魔法改变","老鼠强盗","来自远方的生物","原始居民，奇怪地扭曲了","幽灵","仙灵先遣队","脾气恶劣的虫","昆虫侵扰","猫领主及其仆从"],
+  goal: ["一个安全的居住或藏身之处","精美食物的储藏","失去的家人或朋友","古老的、有价值的艺术品","被搜刮一空的废墟中最后的残渣","稀有的炼金蘑菇","奇怪而强大的法术","大量的皮普"],
+  secret: ["嗡嗡作响的秘法能量巨石","被保存的先驱巨兽","人类实验的迹象","被遗忘的古代女王之墓","通往大地深处的路径","通往仙灵领域的传送门"],
+  faction: ["守卫者：世代守护此处或核心秘密的忠实者","竞争者：追寻与居民相同目标的对手","天敌：以居民为猎物或仇敌的掠食者","夺占者：想把居民赶出此处、霸占地盘","中立第三方：在此处有自己目的的独立势力","超自然存在：与核心秘密相关的幽灵、仙灵或魔法实体"],
+  micro: ["一顶被遗弃的火柴盒宫殿","锡罐搭成的瞭望塔","鹅卵石广场与苔藓花园","铅笔芯削成的雕像","旧报纸叠成的屋顶小屋","一截生锈的钉子立柱","半个核桃壳舟坞","硬币磨成的盾牌陈列","一只破袜子的吊床","种子库与粮仓","火柴杆搭成的桥","罐头盖做成的吊钟","棉线编织的迷宫","玻璃弹珠收藏室","一片大树叶下的露天剧场","旧牙刷改成的栅栏","糖纸做成的彩旗","贝壳议事厅","鸟骨搭成的脚手架","蜡烛头熔成的喷泉"],
+  status: [{rank:"贫穷",pay:"d6p",d:6,m:1},{rank:"平民",pay:"d6×10p",d:6,m:10},{rank:"平民",pay:"d6×10p",d:6,m:10},{rank:"市民鼠",pay:"d6×50p",d:6,m:50},{rank:"公会鼠",pay:"d4×100p",d:4,m:100},{rank:"贵族鼠",pay:"d4×1000p",d:4,m:1000}],
+  npcLook: ["深情的眼睛","鲜艳的补丁衣服","雏菊花环","脏兮兮的衣服","大软帽","口袋里装满种子","弯曲的树枝手杖","携带生锈的别针剑","长而狂野的毛皮","非常非常老","缠着绷带的尾巴","尾巴系着蝴蝶结","缺一只耳朵","长胡须","闪烁的眼睛","巨大沉重的黑色斗篷","旧的战斗伤疤","非常年轻","剃过的毛皮","编织的毛皮"],
+  npcQuirk: ["不断梳理毛发","对天气着迷","精力非常充沛","见多识广","被巫师诅咒","容易受惊","为过去的罪行感到羞愧","非常好胜","浮夸的酒鬼","极其礼貌","毫无保留地诚实","缓慢、谨慎的言辞","快速、不规律的言辞","猫的秘密仆人","被老鼠养大","被家乡驱逐","养了很多宠物昆虫","讨厌户外","当地英雄","非常抽动的胡须"],
+  npcWant: ["自由","安全","逃离","刺激","权力","意义","健康","财富","保护","爱","保护","食物","友谊","休息","知识","野蛮","美丽","复仇","效力","乐趣"],
+  npcRelation: ["父母","兄弟姐妹","表亲","堂亲","祖父母","有亲属关系但不知道","已婚","前恋人","单相思","酒友","欠债","漫长而动荡的","死敌","公会兄弟","童年朋友","一个偷了另一个的东西","一起工作过","一起长大","效忠同一个领主","从未见过面"],
+  roomType: [{n:"空房间",r:[1,2]},{n:"障碍",r:[3,3]},{n:"陷阱",r:[4,4]},{n:"谜题",r:[5,5]},{n:"巢穴",r:[6,6]}],
+  creature: {"空房间":[1,2,3],"障碍":[1,2],"陷阱":[1],"谜题":[1],"巢穴":[1,2,3,4,5]},
+  treasure: {"空房间":[1],"障碍":[1],"陷阱":[1,2],"谜题":[1,2,3,4,5],"巢穴":[1,2,3,4]},
+  traps: ["大石门，转动把手时向前倾倒。","被水淹没的走廊，由大型电池通电。","充满有毒爆炸性气体的黑暗房间。明显臭鸡蛋味。点燃造成 d20 伤害。","横跨致命坠落的细线。缓慢行进则安全。","深坑挡路。一条虫在底部沉睡。","三个蘑菇把手门，一个安全，其他有毒。有毒把手造成 d12 魔法伤害。","魔法蘑菇圈，里面有一只幼鼠。","地板覆盖黏性胶水。STR 豁免挣脱一只脚。"],
+  obstacles: ["上锁的门。钥匙在另一个房间。撞开需要时间且发出噪音。","陡峭的攀爬。没有特殊装备，老鼠有疲惫或坠落的风险。","出口在屋顶中央，距离任何墙壁 6 寸。","产生高音尖叫的装置。每回合给予恐惧状态。","坍塌段，留下太小无法爬过的缝隙。","完全被水填满的隧道。","宽阔深深的泥坑。每 6 寸给予一个疲惫状态。","长而光滑的向上倾斜管道。"],
+  puzzles: ["通电铜板地板，宝藏放在中央。","三个不同颜色液体的喂食瓶，混合时强大/危险。","水晶中嵌着魔法剑，胃酸可溶解水晶。","宝藏在深井底部。","倒扣钢碗，宝藏贴在内侧天花板。","上了饵的捕鼠器，触发会使走廊坍塌。"],
+  nestType: ["临时营地","最近从另一个生物手中夺取","由老鼠建造以关押该生物","正在保护幼崽","永久住所，新近定居","永久住所，布置舒适"],
+  emptyFeature: ["废弃的昆虫巢穴","一簇蘑菇","坍塌的墙壁或天花板","墙上干燥的虫壳","用回收垃圾制成的家具","墙上巨大的蝙蝠脸绘画","凌乱的桌椅","报纸剪报壁纸","长满苔藓","彩色壁画，现已褪色","悬挂在急流上方的平台","根系从墙壁/地板/天花板突出","腐烂的橡子堆","散落的动物牙齿","闪亮的糖果包装纸横幅","头骨门道","天花板持续滴水","严肃的古代老鼠雕像","不平整且深深开裂的地板","白石英祭坛"]
+};
+
+function toggleWC(){
+  WC = !WC;
+  $('wc-toggle').classList.toggle('active', WC);
+  $('module-desc').textContent = WC ? '已加载 WC-PACK，主题追加微观地标掷骰' : '未加载，使用默认掷骰表';
+  $('micro-row').style.display = WC ? 'flex' : 'none';
+  if(!WC){ $('t-micro').textContent='-'; $('l-micro').textContent='d20'; }
+  resetTheme();
+}
+
+function switchTab(name){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  event.target.classList.add('active');
+  $('panel-'+name).classList.add('active');
+}
+
+// 单个骰
+function rollOne(key){
+  const r = roll(TABLES[key].length);
+  $('t-'+key).textContent = r;
+  $('l-'+key).textContent = lookup(TABLES[key], r);
+  buildThemeOutput();
+}
+function rollMicro(){
+  const r = roll(20);
+  $('t-micro').textContent = r;
+  $('l-micro').textContent = lookup(TABLES.micro, r);
+  buildThemeOutput();
+}
+
+// 一键主题
+function rollTheme(){
+  ['build','decay','resident','goal','secret','faction'].forEach(k=>rollOne(k));
+  if(WC) rollMicro();
+}
+
+function resetTheme(){ $('theme-output').textContent = '点击掷骰后，结果可一键复制给AI'; }
+
+function buildThemeOutput(){
+  let o = `=== 主题与场景 ===\n\n`;
+  if(WC) o += `> 已加载模块：WC-PACK\n\n`;
+  o += `建造类型：${$('t-build').textContent} → ${$('l-build').textContent}\n`;
+  o += `衰败原因：${$('t-decay').textContent} → ${$('l-decay').textContent}\n`;
+  o += `居民类型：${$('t-resident').textContent} → ${$('l-resident').textContent}\n`;
+  o += `居民目标：${$('t-goal').textContent} → ${$('l-goal').textContent}\n`;
+  o += `核心秘密：${$('t-secret').textContent} → ${$('l-secret').textContent}\n`;
+  o += `第二派系：${$('t-faction').textContent} → ${$('l-faction').textContent}\n`;
+  if(WC) o += `微观地标 WC-1：${$('t-micro').textContent} → ${$('l-micro').textContent}\n`;
+  $('theme-output').textContent = o;
+}
+
+// NPC
+function rollNPC(){
+  const s = roll(6), st = TABLES.status[s-1];
+  const look = roll(20), quirk = roll(20), want = roll(20), rel = roll(20);
+  const pay = roll(st.d)*st.m;
+  $('n-status').textContent = s; $('l-status').textContent = st.rank;
+  $('n-look').textContent = look; $('l-look').textContent = lookup(TABLES.npcLook, look);
+  $('n-quirk').textContent = quirk; $('l-quirk').textContent = lookup(TABLES.npcQuirk, quirk);
+  $('n-want').textContent = want; $('l-want').textContent = lookup(TABLES.npcWant, want);
+  $('n-relation').textContent = rel; $('l-relation').textContent = lookup(TABLES.npcRelation, rel);
+  $('n-pay').textContent = pay+'p'; $('l-pay').textContent = `(${st.pay} = ${pay/ st.m}×${st.m})`;
+  $('npc-output').textContent = `=== 委托人NPC ===\n\n社会地位：${st.rank}\n外貌：${lookup(TABLES.npcLook,look)}\n怪癖：${lookup(TABLES.npcQuirk,quirk)}\n想要：${lookup(TABLES.npcWant,want)}\n关系：${lookup(TABLES.npcRelation,rel)}\n报酬：${pay}p`;
+}
+
+// 房间批量
+function rollRooms(){
+  const count = parseInt($('room-count').value)||6;
+  const grid = $('room-grid');
+  grid.innerHTML = '';
+  let out = `=== 房间生成（${count}间）===\n\n`;
+  for(let i=1;i<=count;i++){
+    const tr = roll(6), cr = roll(6), trs = roll(6);
+    let type = '未知';
+    TABLES.roomType.forEach(t=>{ if(tr>=t.r[0]&&tr<=t.r[1]) type=t.n; });
+    const creature = (TABLES.creature[type]||[]).includes(cr) ? '有':'无';
+    const treasure = (TABLES.treasure[type]||[]).includes(trs) ? '有':'无';
+    let detail = '';
+    const d = t => { const r=roll(t.length); return `${r}→${t[r-1]}`; };
+    if(type==='陷阱') detail = d(TABLES.traps);
+    else if(type==='障碍') detail = d(TABLES.obstacles);
+    else if(type==='谜题') detail = d(TABLES.puzzles);
+    else if(type==='巢穴') detail = d(TABLES.nestType);
+    else if(type==='空房间') detail = d(TABLES.emptyFeature);
+    out += `房间${i}：${type} | ${detail||''} | 生物：${creature} | 宝藏：${treasure}\n`;
+    const card = document.createElement('div');
+    card.className = 'room-card';
+    card.innerHTML = `<h4>房间 ${i}</h4><div class="row"><span class="label">类型</span><span class="die">${tr}</span><span class="lookup">${type}</span></div>${detail?`<div class="row"><span class="label">详情</span><span class="lookup">${detail}</span></div>`:''}<div class="row"><span class="label">生物</span><span class="die">${cr}</span><span class="lookup">${creature}</span></div><div class="row"><span class="label">宝藏</span><span class="die">${trs}</span><span class="lookup">${treasure}</span></div>`;
+    grid.appendChild(card);
+  }
+  $('room-output').textContent = out;
+}
+
+function copyOutput(id){
+  navigator.clipboard.writeText($(id).textContent).then(()=>{
+    const btn = event.target;
+    const old = btn.textContent;
+    btn.textContent = '已复制!';
+    setTimeout(()=>btn.textContent=old, 1500);
+  });
+}
+</script>
+</body>
+</html>

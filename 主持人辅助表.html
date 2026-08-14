@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mausritter 主持人速查表</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; background:#fff; color:#1a1a1a; padding:8px; }
+.container { max-width:1700px; margin:0 auto; }
+.grid { columns:3; column-gap:8px; }
+.card { background:#f7f7f7; border:1px solid #e0e0e0; border-radius:4px; padding:10px; margin-bottom:8px; break-inside:avoid; -webkit-column-break-inside:avoid; }
+.card h3 { font-size:0.85rem; font-weight:700; margin-bottom:6px; padding-bottom:4px; border-bottom:1px solid #dcdcdc; }
+.row { display:flex; gap:6px; align-items:center; flex-wrap:wrap; margin-bottom:5px; }
+@media (max-width:900px){ .grid{columns:2;} }
+@media (max-width:600px){ .grid{columns:1;} }
+.btn { background:#2a2a2a; color:#fff; border:0; border-radius:4px; padding:5px 12px; font-size:0.85rem; cursor:pointer; transition:background .15s; }
+.btn:hover { background:#444; }
+.btn.ghost { background:#fff; color:#2a2a2a; border:1px solid #bbb; }
+.btn.ghost:hover { background:#eee; }
+.out { font-weight:700; min-width:70px; text-align:center; background:#fff; border:1px solid #ddd; border-radius:4px; padding:5px 8px; font-size:0.9rem; }
+.note { font-size:0.82rem; color:#555; flex:1; min-width:140px; }
+.hint { font-size:0.78rem; color:#999; }
+.rule { font-size:0.83rem; color:#333; line-height:1.7; }
+.rule b { color:#111; }
+table { width:100%; border-collapse:collapse; font-size:0.83rem; }
+th,td { padding:4px 6px; border-bottom:1px solid #e3e3e3; text-align:left; }
+th { color:#555; font-weight:600; background:#f0f0f0; }
+.succ { color:#1a7f37; font-weight:700; }
+.fail { color:#c62828; font-weight:700; }
+input { background:#fff; border:1px solid #ccc; border-radius:4px; padding:5px; width:54px; text-align:center; font-size:0.9rem; }
+.radio-row { display:flex; gap:12px; align-items:center; font-size:0.85rem; margin-bottom:6px; }
+.radio-row label { display:flex; gap:4px; align-items:center; cursor:pointer; }
+.big-num { font-size:1.2rem; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="grid">
+    <!-- 遭遇检定 -->
+    <div class="card">
+      <h3>遭遇检定</h3>
+      <div class="row">
+        <span class="out big-num" id="turn">0</span>
+        <button class="btn" onclick="turnAdd(1)">+1 探索轮</button>
+        <button class="btn ghost" onclick="turnAdd(-1)">-1</button>
+        <button class="btn ghost" onclick="turnReset()">重置</button>
+      </div>
+      <div class="row">
+        <span class="note">地下城：每3探索轮或制造动静</span>
+        <button class="btn" onclick="rollDungeon()">d6</button>
+        <span class="out" id="dun">-</span>
+      </div>
+      <div class="row">
+        <span class="note">荒野：晨/暮守望开始</span>
+        <button class="btn" onclick="rollWild()">d6</button>
+        <span class="out" id="wild">-</span>
+        <button class="btn ghost" onclick="rollHour()">d12</button>
+        <span class="out" id="hour">-</span>
+      </div>
+      <div class="hint">1=遭遇 · 2=预兆 · 3-6=无事；d12 定遭遇时刻</div>
+    </div>
+
+    <!-- 反应与士气 -->
+    <div class="card">
+      <h3>反应表</h3>
+      <div class="row">
+        <span class="note">态度不明显的生物</span>
+        <button class="btn" onclick="rollReaction()">2d6</button>
+        <span class="out" id="reac">-</span>
+      </div>
+      <div class="rule" id="reac-text">—</div>
+      <h3 style="margin-top:14px">士气检定</h3>
+      <div class="rule">对手满足任一条件，须 <b>WIL 豁免</b>，失败则逃跑或投降：<br>• 开局明显劣势<br>• 首次受重击<br>• 看到盟友逃跑或倒下</div>
+    </div>
+
+    <!-- 豁免 -->
+    <div class="card">
+      <h3>豁免（3d6 ≤ 属性）</h3>
+      <div class="radio-row">
+        <label><input type="radio" name="adv" value="normal" checked>普通</label>
+        <label><input type="radio" name="adv" value="adv">优势</label>
+        <label><input type="radio" name="adv" value="dis">劣势</label>
+      </div>
+      <div class="row">
+        <button class="btn" onclick="rollSave()">掷 3d6</button>
+        <span class="out" id="save">-</span>
+      </div>
+      <div class="row">
+        <span class="note">属性值</span>
+        <input type="number" id="stat" min="1" max="18" value="9" oninput="judge()">
+        <span class="note" id="save-judge" style="flex:1.4">3d6 ≤ 属性则成功</span>
+      </div>
+      <div class="rule" style="margin-top:8px">优势掷2次3d6取低，劣势取高。<b>对抗豁免</b>：双方各掷3d6，最低成功值者胜。</div>
+      <h3 style="margin-top:14px">幸运骰</h3>
+      <div class="row">
+        <span class="note">X-in-6</span>
+        <input type="number" id="luckx" min="1" max="5" value="3">
+        <button class="btn" onclick="rollLuck()">d6</button>
+        <span class="out" id="luck">-</span>
+      </div>
+    </div>
+
+    <!-- 战斗 -->
+    <div class="card">
+      <h3>战斗</h3>
+      <div class="rule">
+        先攻：突袭则先手，否则 <b>DEX 豁免</b> 定先后<br>
+        回合：移动 ≤12 格 + 1 个动作<br>
+        攻击：始终命中，掷武器骰 − 对方护甲 = 伤害<br>
+        削弱攻击掷 <b>d4</b>（掩体/缠斗），增强攻击掷 <b>d12</b>（赌命一击/对手暴露）<br>
+        从背包取物：<b>DEX 豁免</b>，成功本回合可用
+      </div>
+      <h3 style="margin-top:14px">伤害流程</h3>
+      <div class="rule">伤害 → 护甲减免 → 扣 HP → HP 耗尽 → 扣 STR</div>
+      <div class="rule">STR 受损后掷 <b>重击豁免</b>（STR），失败获受伤状态并倒地，直到同伴照料并短休；倒地 6 轮无人照料则死亡<br>STR=0 死亡 · DEX=0 无法移动 · WIL=0 丧失意识</div>
+      <h3 style="margin-top:14px">失败后果</h3>
+      <table>
+        <tr><th>后果</th><th>示例</th></tr>
+        <tr><td>伤害</td><td>d4 – d20</td></tr>
+        <tr><td>状态</td><td>疲惫 / 恐惧</td></tr>
+        <tr><td>浪费时间</td><td>引发遭遇检定</td></tr>
+        <tr><td>丢失物品</td><td>掷 d5 定栏位</td></tr>
+      </table>
+    </div>
+
+    <!-- 施法 -->
+    <div class="card">
+      <h3>施法</h3>
+      <div class="rule">握着石板，消耗 <b>1 点 STR</b>（最低降至 1），掷 STR 颗 d6。<br>[DICE] = 显示 3+ 的骰子数。</div>
+      <div class="row" style="margin-top:8px">
+        <span class="note">STR 值</span>
+        <input type="number" id="cast" min="1" max="18" value="9">
+        <button class="btn" onclick="rollCast()">掷施法</button>
+        <span class="out" id="cast-out">-</span>
+      </div>
+      <div class="rule" id="cast-detail" style="margin-top:6px">输入 STR 后掷骰，统计 3+ 的骰子数</div>
+      <div class="rule" style="margin-top:8px"><b>法力苔藓</b>（10p）：施法时使用，不消耗 STR，视为 STR=3<br><b>失控</b>：掷出 1 且总值 &lt; 原 STR，失败并获得枯竭状态</div>
+    </div>
+
+    <!-- 时间与旅行 -->
+    <div class="card">
+      <h3>时间与旅行</h3>
+      <div class="rule">轮 &lt;1分 · 探索轮 ≈10分 · 守望 ≈6时（36轮），1天4守望<br>旅行 1守望/格，困难地形 2守望<br>恶劣天气旅行 STR 豁免，否则疲惫</div>
+      <div class="row" style="margin-top:8px">
+        <span class="note">觅食：花 1 守望</span>
+        <button class="btn" onclick="rollForage()">d3</button>
+        <span class="out" id="forage">-</span>
+        <span class="note">口粮</span>
+      </div>
+      <h3 style="margin-top:14px">休息</h3>
+      <table>
+        <tr><th>休息</th><th>花费</th><th>效果</th></tr>
+        <tr><td>短休</td><td>1探索轮</td><td>d6+1 HP</td></tr>
+        <tr><td>长休</td><td>1守望</td><td>全 HP</td></tr>
+        <tr><td>完全休息</td><td>1周</td><td>全恢复（食宿约20p）</td></tr>
+      </table>
+      <div class="hint" style="margin-top:6px">每天无 1 守望休息 → 疲惫</div>
+    </div>
+
+    <!-- 状态与物品 -->
+    <div class="card">
+      <h3>状态槽（3 格）</h3>
+      <table>
+        <tr><th>状态</th><th>效果</th><th>清除</th></tr>
+        <tr><td>饥饿</td><td>STR/DEX 豁免劣势</td><td>进食</td></tr>
+        <tr><td>疲惫</td><td>—</td><td>长休</td></tr>
+        <tr><td>受伤</td><td>—</td><td>完全休息</td></tr>
+        <tr><td>恐惧</td><td>—</td><td>完全休息</td></tr>
+        <tr><td>枯竭</td><td>—</td><td>完全休息</td></tr>
+      </table>
+      <div class="rule" style="margin-top:6px">第 4 个状态 → 立即重击（受伤取代全部状态）</div>
+      <h3 style="margin-top:14px">物品栏</h3>
+      <div class="rule"><b>5 个背包格</b>，装备中的物品不占格。战斗中从背包取物需 DEX 豁免。</div>
+    </div>
+  </div>
+</div>
+
+<script>
+const roll = s => Math.floor(Math.random()*s)+1;
+const sum3 = () => roll(6)+roll(6)+roll(6);
+const $ = id => document.getElementById(id);
+
+// 探索轮
+let turn = 0;
+const turnAdd = n => { turn = Math.max(0, turn+n); $('turn').textContent = turn; };
+const turnReset = () => { turn = 0; $('turn').textContent = '0'; };
+
+// 遭遇（显示数值 + 结果）
+function rollDungeon(){ const r=roll(6); $('dun').textContent = `${r} · ${r===1?'遭遇':r===2?'预兆':'无事'}`; }
+function rollWild(){ const r=roll(6); $('wild').textContent = `${r} · ${r===1?'遭遇':r===2?'预兆':'无事'}`; }
+const rollHour = () => $('hour').textContent = `${roll(12)} 时`;
+
+// 反应表
+function rollReaction(){
+  const r = roll(6)+roll(6);
+  $('reac').textContent = r;
+  const t = r===2?'敌对。老鼠怎么惹怒了它们？'
+    : r<=5?'不友好。如何才能安抚它们？'
+    : r<=8?'不确定。什么能赢得它们？'
+    : r<=11?'健谈。它们想交易什么？'
+    : '友善。它们怎么帮助老鼠？';
+  $('reac-text').textContent = t;
+}
+
+// 豁免
+function rollSave(){
+  const mode = document.querySelector('input[name="adv"]:checked').value;
+  let t;
+  if(mode==='normal') t = sum3();
+  else { const a=sum3(), b=sum3(); t = mode==='adv'?Math.min(a,b):Math.max(a,b); }
+  $('save').textContent = t;
+  judge();
+}
+function judge(){
+  const stat = parseInt($('stat').value)||9;
+  const n = parseInt($('save').textContent);
+  const el = $('save-judge');
+  if(isNaN(n)){ el.textContent='3d6 ≤ 属性则成功'; el.className='note'; return; }
+  if(n<=stat){ el.textContent=`成功（${n}≤${stat}）`; el.className='note succ'; }
+  else { el.textContent=`失败（${n}>${stat}）`; el.className='note fail'; }
+}
+
+// 幸运骰
+function rollLuck(){
+  const x = parseInt($('luckx').value)||3, r = roll(6);
+  $('luck').textContent = `${r} · ${r<=x?'发生':'未发生'}`;
+}
+
+// 施法：掷 STR 颗 d6，统计 3+ 数量
+function rollCast(){
+  const str = parseInt($('cast').value)||9;
+  const dice = Array.from({length:str}, () => roll(6));
+  const diceNum = dice.filter(d => d>=3).length;
+  $('cast-out').textContent = `${diceNum} dice`;
+  $('cast-detail').textContent = `掷 ${str} 颗 d6：${dice.join(' ')} → [DICE]=${diceNum}`;
+}
+
+// 觅食
+const rollForage = () => $('forage').textContent = roll(3);
+</script>
+</body>
+</html>

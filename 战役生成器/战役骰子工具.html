@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mausritter 战役层骰子工具</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; background:#fff; color:#1a1a1a; padding:10px; }
+.container { max-width:1100px; margin:0 auto; }
+.tabs { display:flex; gap:6px; margin-bottom:10px; flex-wrap:wrap; }
+.tab { padding:6px 16px; background:#f2f2f2; border:1px solid #ddd; border-radius:4px; cursor:pointer; font-size:0.88rem; color:#555; }
+.tab:hover { background:#e8e8e8; }
+.tab.active { background:#2a2a2a; color:#fff; border-color:#2a2a2a; }
+.panel { display:none; }
+.panel.active { display:block; }
+.section { background:#f7f7f7; border:1px solid #e0e0e0; border-radius:4px; padding:12px; margin-bottom:10px; }
+.section h3 { font-size:0.9rem; margin-bottom:10px; padding-bottom:6px; border-bottom:1px solid #dcdcdc; }
+.row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:6px; }
+.label { min-width:90px; font-size:0.85rem; color:#555; }
+.die { font-weight:700; min-width:70px; text-align:center; background:#fff; border:1px solid #ddd; border-radius:4px; padding:5px 8px; font-size:0.88rem; }
+.lookup { font-size:0.83rem; color:#333; flex:1; min-width:180px; }
+.btn { background:#2a2a2a; color:#fff; border:0; border-radius:4px; padding:6px 14px; font-size:0.88rem; cursor:pointer; }
+.btn:hover { background:#444; }
+.btn.ghost { background:#fff; color:#2a2a2a; border:1px solid #bbb; }
+.btn.ghost:hover { background:#eee; }
+.input-group { display:flex; gap:6px; align-items:center; }
+.input-group input { width:56px; padding:5px; background:#fff; border:1px solid #ccc; border-radius:4px; text-align:center; }
+.input-group label { font-size:0.83rem; color:#555; }
+.radio-row { display:flex; gap:12px; align-items:center; font-size:0.85rem; margin-bottom:8px; }
+.radio-row label { display:flex; gap:4px; align-items:center; cursor:pointer; }
+.output { background:#f5f5f5; border:1px solid #ddd; border-radius:4px; padding:10px; margin-top:10px; white-space:pre-wrap; font-family:monospace; font-size:0.85rem; line-height:1.6; max-height:400px; overflow-y:auto; }
+.copy { margin-top:8px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('hex')">六角格</div>
+    <div class="tab" onclick="switchTab('settle')">定居点</div>
+    <div class="tab" onclick="switchTab('season')">季节与流言</div>
+    <div class="tab" onclick="switchTab('hook')">起始钩子</div>
+  </div>
+
+  <!-- 六角格 -->
+  <div id="panel-hex" class="panel active">
+    <div class="section">
+      <h3>六角格生成</h3>
+      <div class="row">
+        <div class="input-group">
+          <label>格子数</label>
+          <input type="number" id="hex-count" value="5" min="1" max="25">
+        </div>
+        <button class="btn" onclick="rollHexes()">生成格子</button>
+        <span class="lookup">每格：类型 + 地标 + 细节</span>
+      </div>
+      <div class="row" style="margin-top:8px">
+        <span class="label">单格掷骰</span>
+        <button class="btn ghost" onclick="rollHex()">d6+d20+d6+d8</button>
+        <span class="die" id="h-type">-</span>
+        <span class="die" id="h-land">-</span>
+        <span class="lookup" id="h-detail">-</span>
+      </div>
+    </div>
+    <div class="output" id="hex-output">点击生成</div>
+    <button class="btn copy" onclick="copyOutput('hex-output')">复制结果</button>
+  </div>
+
+  <!-- 定居点 -->
+  <div id="panel-settle" class="panel">
+    <div class="section">
+      <h3>定居点一键生成</h3>
+      <button class="btn" onclick="rollSettlement()">生成定居点</button>
+      <div class="row" style="margin-top:10px">
+        <span class="label">规模</span>
+        <span class="die" id="s-scale">-</span>
+        <span class="lookup" id="l-scale">2d6 取低</span>
+      </div>
+      <div class="row">
+        <span class="label">治理</span>
+        <span class="die" id="s-gov">-</span>
+        <span class="lookup" id="l-gov">d6+规模</span>
+      </div>
+      <div class="row">
+        <span class="label">居民习俗</span>
+        <span class="die" id="s-custom">-</span>
+        <span class="lookup" id="l-custom">d20</span>
+      </div>
+      <div class="row">
+        <span class="label">显著特征</span>
+        <span class="die" id="s-feature">-</span>
+        <span class="lookup" id="l-feature">d20（城市两个）</span>
+      </div>
+      <div class="row">
+        <span class="label">产业</span>
+        <span class="die" id="s-industry">-</span>
+        <span class="lookup" id="l-industry">d20（城镇/城市两个）</span>
+      </div>
+      <div class="row">
+        <span class="label">当前事件</span>
+        <span class="die" id="s-event">-</span>
+        <span class="lookup" id="l-event">d20</span>
+      </div>
+      <div class="row">
+        <span class="label">命名</span>
+        <span class="die" id="s-name">-</span>
+        <span class="lookup" id="l-name">前缀+后缀</span>
+      </div>
+      <div class="row">
+        <span class="label">酒馆</span>
+        <span class="die" id="s-tavern">-</span>
+        <span class="lookup" id="l-tavern">d12×3</span>
+      </div>
+    </div>
+    <div class="output" id="settle-output">点击生成</div>
+    <button class="btn copy" onclick="copyOutput('settle-output')">复制结果</button>
+  </div>
+
+  <!-- 季节与流言 -->
+  <div id="panel-season" class="panel">
+    <div class="section">
+      <h3>季节天气与事件</h3>
+      <div class="radio-row">
+        <label><input type="radio" name="season" value="spring" checked>春</label>
+        <label><input type="radio" name="season" value="summer">夏</label>
+        <label><input type="radio" name="season" value="autumn">秋</label>
+        <label><input type="radio" name="season" value="winter">冬</label>
+        <button class="btn" onclick="rollSeason()">掷天气</button>
+      </div>
+      <div class="row">
+        <span class="label">天气 2d6</span>
+        <span class="die" id="w-dice">-</span>
+        <span class="lookup" id="w-weather">-</span>
+      </div>
+      <div class="row">
+        <span class="label">季节事件</span>
+        <button class="btn ghost" onclick="rollSeasonEvent()">d6</button>
+        <span class="die" id="w-event">-</span>
+        <span class="lookup" id="l-event2">d6</span>
+      </div>
+      <div class="hint" style="font-size:0.8rem;color:#888">恶劣天气旅行需 STR 豁免，否则疲惫</div>
+    </div>
+    <div class="section">
+      <h3>流言真实度</h3>
+      <div class="row">
+        <span class="label">流言 d6</span>
+        <button class="btn ghost" onclick="rollRumor()">d6</button>
+        <span class="die" id="r-dice">-</span>
+        <span class="lookup" id="r-text">d6</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 起始钩子 -->
+  <div id="panel-hook" class="panel">
+    <div class="section">
+      <h3>冒险地点起始钩子</h3>
+      <div class="row">
+        <span class="label">钩子 d6</span>
+        <button class="btn ghost" onclick="rollHook()">d6</button>
+        <span class="die" id="k-dice">-</span>
+        <span class="lookup" id="k-text">d6</span>
+      </div>
+      <div class="output" id="hook-output" style="margin-top:10px">点击掷骰</div>
+      <button class="btn copy" onclick="copyOutput('hook-output')">复制结果</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const roll = s => Math.floor(Math.random()*s)+1;
+const $ = id => document.getElementById(id);
+
+const T = {
+  type: ["乡村","乡村","森林","森林","河流","人类城镇"],
+  land: [
+    ["蚁丘","被闪电劈开的山毛榉","骨白之树","牛骨架","花田","麦田","篱笆","空心树桩","巨大的平岩","睡莲点缀的池塘","巨型倒木","古老崎岖的橡树","旧农舍","安静的土路","兔穴","麻雀巢","松树林","陡峭山丘","石墙","无花果根系纠缠"],
+    ["废弃小屋","明亮的林间空地","层叠瀑布","峭壁","冰冷清新的泉水","密集的灌木丛","古橡树上的面孔","狐狸洞","蕨类树丛","空心树桩","巨型松树","人类步道","人造空地","蜿蜒的小溪","杂草丛生的遗迹","石环","岩石突起","凹陷的洼地","根系纠缠","白蚁蛀蚀的大树"],
+    ["运河水闸","汇流支流","低垂的柳树","侵蚀的河岸","倒木桥","高瀑布","巨石","巨型混凝土水坝","孤立的小岛","泥泞浅滩","岩石急流","一排枯树","淤泥坝","踏脚石","石桥","多石浅滩","水下垃圾","沉船","扭曲的树根","木桥"],
+    ["废弃汽车","公寓阳台","黑莓篱笆","繁忙的道路","排水管口","被丢弃的家具","温室","老鼠遗迹","新建房屋","杂草丛生的花圃","鸽巢","垃圾堆","岩石河床","购物推车","死水池塘","钢桥","垃圾填埋箱","林荫小道","地下停车场","柴棚"]
+  ],
+  detail: [
+    ["小型老鼠农场","贵族鼠的城堡","友好的老鼠驿站","老鼠猎庐","采矿前哨","老鼠隐士的小屋","天然洞穴","荆棘骑士的塔楼"],
+    ["鸣禽的巢","一群巨大而和平的野兽","鼠匪的藏身处","乌鸦秘社的尖塔","昆虫巢穴","巨型掠食者的巢穴","青蛙堡垒","老鼠巫师的塔楼"],
+    ["危险的天然地形","孤寂的神龛","贵族鼠的庄园","废弃的定居点","毁弃的瞭望塔","宁静安全的天然地貌","位置不当的天然地貌","摇摇欲坠的桥"],
+    ["古老的蝙蝠邪教神殿","仙灵环","甲虫墓地","老鼠女巫的小屋","小而深的池塘","反季节的植物","猫头鹰巫师的巢穴","奇异的魔法异常"],
+    ["坠毁的小人国飞艇","嗡嗡作响的石头","完全没有生命","人类定期使用","被人类破坏","远古文明的遗迹","猫领主的猎场","改造的人类建筑"]
+  ],
+  scale: ["农庄/庄园（1-3户家庭）","路口村（3-5户家庭）","小村（50-150只老鼠）","村庄（150-300只老鼠）","城镇（300-1000只老鼠）","城市（1000+只老鼠）"],
+  gov: ["由村中长者指导","由骑士或低阶领主管理","由公会委员会组织","自由定居点，由市议员会议治理","高阶贵族鼠的宅邸","男权力量的所在地"],
+  custom: ["在毛皮上剃出精致的花纹","因奇异植物而陶醉","对与外人做生意很警惕","对远方新闻好奇","认为梳理毛皮是厄运","穿着精美的刺绣服装","酿造蜂蜜酒，以刺鼻的草药调味","用长兜帽遮住脸","因猫领主的什一税而贫困","仪式性地修剪尾巴","勇敢的大型野兽猎人","全部是同一位女族长的后代","烤制美味的浆果馅饼","实验室逃脱者，对世界天真","在溪边懒洋洋地度过白日","与另一个定居点有长期的血仇","在公会监督下挖掘宏伟隧道","戴着宽大的宽檐帽","有令外人困惑的法律和习俗","与一只掠食者关系友好"],
+  feature: ["迷宫般的防御性陷阱隧道","极其舒适、设备精良的旅馆","黑木雕刻的神龛","冥想的蘑菇花园","牛头骨，改造成公会会所","密密麻麻的棚户","整齐排列的悬挂式木屋","华丽的大门，以雕像守卫","秘密的蝙蝠邪教神殿","甲虫赛跑场","储藏丰富的仓库","隐秘的内河船码头","破败的大理石宫殿，由远古老鼠建造","拾荒的人类机器，仍在运转","木桥连接整个定居点","令人不安的高耸扭曲塔楼","美丽的花圃","鸽骑手的栖架","杂草丛生的古代英雄雕像","螺旋阶梯，通往深地之下"],
+  industry: ["农夫，照料高耸的庄稼","伐木工，带着锯和挽具","粗犷多疤的渔鼠，带着网和木筏","阴暗发霉的蘑菇农场","谷物晾在每一处平面","浓味的奶酪，陈酿多年","稀有草药的花园","蜂巢和戴面纱的养蜂人","商人和贸易者，经常需要护卫","石匠，在附近采石场工作","面粉磨坊，由大型水车驱动","深矿井，开采铁、银或锡","饲养桑蚕并织造精美布料","精通洞穴和隧道探索","窑烧陶器，施以明亮的釉彩","羊毛磨坊，挂满鲜艳的布匹","优秀的学校，吵闹的学生","熙熙攘攘、货品充足的市场","发臭的拾荒垃圾堆，仔细翻拣","雕刻和抛光木材制成的美丽家具"],
+  event: ["灾难，所有人都在收拾离开","婚礼，街道上装饰满鲜花","准备盛大的季节性宴席","一场疾病袭来","仓库被昆虫劫掠","集市日，农夫涌向定居点","老鼠们剑拔弩张","正在组建战团击败一头野兽","几个孩子失踪了","贵族鼠提出了轻率的要求","流浪剧团到来","葬礼，街道烟雾弥漫","骗子煽动一个不理性的计划","宠物甲虫发疯，攻击老鼠","仙灵使者提出不可能的要求","附近有奇异速生的植物","贵重的传家宝被盗","猫领主索要沉重的什一税","为年轻老鼠举行成年礼","巫师塔乘龟而来"],
+  nameA: ["橡树","浆果","柳树","树桩","松树","月亮","翠绿","黑色","石头","山丘","无花果","苹果"],
+  nameB: ["沼泽","猫头鹰","狐狸","橡果","铜钱","强盗","科尔比","排水沟","玫瑰","铜币","朋友","树干"],
+  suffixA: ["村","镇","坊","谷","林","城","墟","籽","烬","丛","缝","光"],
+  suffixB: ["林","丘","塔","农","桥","门","溪","池","巢","渡","墓","溪流"],
+  tavernA: ["白色","绿色","黑色","红色","银色","弯曲","友好","隐秘","狡猾","玻璃","多刺","破碎"],
+  tavernB: ["甲虫","狐狸","楔子","谷粒","鼠","奶酪","鹰","虫","蜜蜂","灯笼","玫瑰","骑士"],
+  dish: ["香料烤胡萝卜","水煮蠕虫汤","黑莓馅饼","浓味陈年奶酪","大麦粥","厚切河鱼排","烤苹果","油炸裹面包屑虫腿","新鲜黄油面包","拾荒糖果","蜜烤种子","蘑菇炖菜"],
+  weather: {
+    spring:["暴风雨","毛毛雨","阴天","明媚晴朗","晴朗温暖"],
+    summer:["雷暴","酷热","晴朗炎热","宜人晴朗","美丽温暖"],
+    autumn:["狂风","大雨","凉爽","阵雨","晴朗清爽"],
+    winter:["暴风雪","雨夹雪","严寒","阴天","晴朗清爽"]
+  },
+  sevevent: {
+    spring:["洪水冲走了一个重要的地标","母鸟，非常保护她的蛋","商人的车陷在泥潭中","迁徙的蝴蝶，渴望花蜜","老鼠编织花环，为庆典做准备","婚礼节庆，欢乐的游行"],
+    summer:["热浪使下周的旅行令人疲惫","幼鸟，从巢中坠落","宜人清爽的太阳雨","蝗虫群摧毁了一个定居点的庄稼","老鼠制作精致的服装，为庆典做准备","仲夏节，狂野的舞蹈"],
+    autumn:["一棵重要的树被狂风吹倒","母鸟，因孩子离家而心烦意乱","一大片蘑菇一夜之间冒出","传言附近长着松露","老鼠搬运一捆捆谷物并烤馅饼，为庆典做准备","丰收节，盛大的宴席"],
+    winter:["大雪阻止地面移动一周","翅膀折断的鸟，年老灰暗","迷路的迁徙鸭子，与鸭群失散","旅行者在快速移动的风暴中消失","老鼠制作冬日老人的模拟像，为庆典做准备","仲冬节，壮观的篝火"]
+  },
+  hook: ["寻找失踪的家庭成员","奉贵族鼠之命进行调查","老鼠巫师需要一种特定的法术成分","此处是骚扰定居点的生物巢穴","追随一份继承的藏宝图","为躲避可怕的暴风雨而寻找庇护所"]
+};
+
+function switchTab(name){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  event.target.classList.add('active');
+  $('panel-'+name).classList.add('active');
+}
+
+// 六角格
+function rollHex(){
+  const tr = roll(6), type = T.type[tr-1];
+  const lr = roll(20), land = T.land[tr>=6?3:Math.floor((tr-1)/2)][lr-1];
+  const d1 = roll(6), d2 = roll(8);
+  const det = (T.detail[d1-1] || [])[d2-1] || '无特殊细节';
+  $('h-type').textContent = type;
+  $('h-land').textContent = land;
+  $('h-detail').textContent = det;
+  return {type, land, det};
+}
+function rollHexes(){
+  const n = parseInt($('hex-count').value)||5;
+  let out = `=== 六角格 × ${n} ===\n\n`;
+  for(let i=1;i<=n;i++){
+    const h = rollHex();
+    out += `${i}：${h.land}\n[${h.type} · ${h.det}]\n\n`;
+  }
+  $('hex-output').textContent = out;
+}
+
+// 定居点
+function rollSettlement(){
+  const s = Math.min(roll(6), roll(6));
+  const gv = roll(6) + s;
+  const govIdx = gv<=3?0 : gv<=5?1 : gv<=7?2 : gv<=9?3 : gv<=11?4 : 5;
+  const vals = {
+    scale: s, gov: govIdx,
+    custom: roll(20), feature: roll(20), industry: roll(20), event: roll(20),
+    nameA: roll(12), nameB: roll(12), suffix: roll(12),
+    tavA: roll(12), tavB: roll(12), dish: roll(12)
+  };
+  $('s-scale').textContent = vals.scale; $('l-scale').textContent = T.scale[s-1];
+  $('s-gov').textContent = gv; $('l-gov').textContent = T.gov[govIdx];
+  $('s-custom').textContent = vals.custom; $('l-custom').textContent = T.custom[vals.custom-1];
+  $('s-feature').textContent = vals.feature; $('l-feature').textContent = T.feature[vals.feature-1];
+  $('s-industry').textContent = vals.industry; $('l-industry').textContent = T.industry[vals.industry-1];
+  $('s-event').textContent = vals.event; $('l-event').textContent = T.event[vals.event-1];
+  $('s-name').textContent = vals.nameA+'/'+vals.nameB; $('l-name').textContent = T.nameA[vals.nameA-1]+T.suffixA[vals.suffix-1] + ' 或 ' + T.nameB[vals.nameB-1]+T.suffixB[vals.suffix-1];
+  $('s-tavern').textContent = vals.tavA+'/'+vals.tavB+'/'+vals.dish; $('l-tavern').textContent = T.tavernA[vals.tavA-1]+T.tavernB[vals.tavB-1]+'（'+T.dish[vals.dish-1]+'）';
+  $('settle-output').textContent = `=== 定居点 ===\n\n规模：${T.scale[s-1]}\n治理：${T.gov[govIdx]}\n居民习俗：${T.custom[vals.custom-1]}\n显著特征：${T.feature[vals.feature-1]}\n产业：${T.industry[vals.industry-1]}\n当前事件：${T.event[vals.event-1]}\n命名：${T.nameA[vals.nameA-1]}${T.suffixA[vals.suffix-1]} / ${T.nameB[vals.nameB-1]}${T.suffixB[vals.suffix-1]}\n酒馆：${T.tavernA[vals.tavA-1]}${T.tavernB[vals.tavB-1]}（${T.dish[vals.dish-1]}）`;
+}
+
+// 季节
+function seasonOf(){ return document.querySelector('input[name="season"]:checked').value; }
+function rollSeason(){
+  const s = seasonOf();
+  const r = roll(6)+roll(6);
+  const idx = r===2?0 : r<=5?1 : r<=8?2 : r<=11?3 : 4;
+  $('w-dice').textContent = r;
+  $('w-weather').textContent = T.weather[s][idx];
+}
+function rollSeasonEvent(){
+  const s = seasonOf(), r = roll(6);
+  $('w-event').textContent = r;
+  $('l-event2').textContent = T.sevevent[s][r-1];
+}
+function rollRumor(){
+  const r = roll(6);
+  $('r-dice').textContent = r;
+  $('r-text').textContent = r<=3?'真实':r<=5?'部分真实':'虚假';
+}
+
+// 钩子
+function rollHook(){
+  const r = roll(6);
+  $('k-dice').textContent = r;
+  $('k-text').textContent = T.hook[r-1];
+  $('hook-output').textContent = `起始钩子：d6=${r} → ${T.hook[r-1]}`;
+}
+
+function copyOutput(id){
+  navigator.clipboard.writeText($(id).textContent).then(()=>{
+    const btn = event.target;
+    const old = btn.textContent;
+    btn.textContent = '已复制!';
+    setTimeout(()=>btn.textContent=old, 1500);
+  });
+}
+</script>
+</body>
+</html>
