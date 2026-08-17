@@ -28,6 +28,7 @@ th,td { padding:4px 6px; border-bottom:1px solid #e3e3e3; text-align:left; }
 th { color:#555; font-weight:600; background:#f0f0f0; }
 .succ { color:#1a7f37; font-weight:700; }
 .fail { color:#c62828; font-weight:700; }
+.enc-hint { display:none; color:#c62828; font-weight:700; font-size:0.85rem; margin-top:6px; padding:5px 8px; background:#fdecec; border:1px solid #f2c4c4; border-radius:4px; }
 input { background:#fff; border:1px solid #ccc; border-radius:4px; padding:5px; width:54px; text-align:center; font-size:0.9rem; }
 .radio-row { display:flex; gap:12px; align-items:center; font-size:0.85rem; margin-bottom:6px; }
 .radio-row label { display:flex; gap:4px; align-items:center; cursor:pointer; }
@@ -46,6 +47,7 @@ input { background:#fff; border:1px solid #ccc; border-radius:4px; padding:5px; 
         <button class="btn ghost" onclick="turnAdd(-1)">-1</button>
         <button class="btn ghost" onclick="turnReset()">重置</button>
       </div>
+      <div class="enc-hint" id="enc-hint">该触发遭遇检定</div>
       <div class="row">
         <span class="note">地下城：每3探索轮或制造动静</span>
         <button class="btn" onclick="rollDungeon()">d6</button>
@@ -132,6 +134,7 @@ input { background:#fff; border:1px solid #ccc; border-radius:4px; padding:5px; 
         <span class="note">STR 值</span>
         <input type="number" id="cast" min="1" max="18" value="9">
         <button class="btn" onclick="rollCast()">掷施法</button>
+        <button class="btn ghost" onclick="castReset()">重置</button>
         <span class="out" id="cast-out">-</span>
       </div>
       <div class="rule" id="cast-detail" style="margin-top:6px">输入 STR 后掷骰，统计 3+ 的骰子数</div>
@@ -142,12 +145,7 @@ input { background:#fff; border:1px solid #ccc; border-radius:4px; padding:5px; 
     <div class="card">
       <h3>时间与旅行</h3>
       <div class="rule">轮 &lt;1分 · 探索轮 ≈10分 · 守望 ≈6时（36轮），1天4守望<br>旅行 1守望/格，困难地形 2守望<br>恶劣天气旅行 STR 豁免，否则疲惫</div>
-      <div class="row" style="margin-top:8px">
-        <span class="note">觅食：花 1 守望</span>
-        <button class="btn" onclick="rollForage()">d3</button>
-        <span class="out" id="forage">-</span>
-        <span class="note">口粮</span>
-      </div>
+      <div class="rule" style="margin-top:8px"><b>觅食</b>：在野外花 1 守望，掷 d3 获得口粮</div>
       <h3 style="margin-top:14px">休息</h3>
       <table>
         <tr><th>休息</th><th>花费</th><th>效果</th></tr>
@@ -183,8 +181,9 @@ const $ = id => document.getElementById(id);
 
 // 探索轮
 let turn = 0;
-const turnAdd = n => { turn = Math.max(0, turn+n); $('turn').textContent = turn; };
-const turnReset = () => { turn = 0; $('turn').textContent = '0'; };
+const updateEncHint = () => { $('enc-hint').style.display = (turn>0 && turn%3===0) ? 'block' : 'none'; };
+const turnAdd = n => { turn = Math.max(0, turn+n); $('turn').textContent = turn; updateEncHint(); };
+const turnReset = () => { turn = 0; $('turn').textContent = '0'; updateEncHint(); };
 
 // 遭遇（显示数值 + 结果）
 function rollDungeon(){ const r=roll(6); $('dun').textContent = `${r} · ${r===1?'遭遇':r===2?'预兆':'无事'}`; }
@@ -227,17 +226,22 @@ function rollLuck(){
   $('luck').textContent = `${r} · ${r<=x?'发生':'未发生'}`;
 }
 
-// 施法：掷 STR 颗 d6，统计 3+ 数量
+// 施法：掷 STR 颗 d6，统计 3+ 数量；掷出 1 且总值 < 原 STR 则失控
 function rollCast(){
   const str = parseInt($('cast').value)||9;
   const dice = Array.from({length:str}, () => roll(6));
   const diceNum = dice.filter(d => d>=3).length;
+  const total = dice.reduce((a,b) => a+b, 0);
+  const lost = dice.includes(1) && total < str;
   $('cast-out').textContent = `${diceNum} dice`;
-  $('cast-detail').textContent = `掷 ${str} 颗 d6：${dice.join(' ')} → [DICE]=${diceNum}`;
+  $('cast-detail').innerHTML = lost
+    ? `<span class="fail">失控！施法失败并获得枯竭状态</span> · 掷 ${str} 颗 d6：${dice.join(' ')} → [DICE]=${diceNum}`
+    : `掷 ${str} 颗 d6：${dice.join(' ')} → [DICE]=${diceNum}`;
 }
-
-// 觅食
-const rollForage = () => $('forage').textContent = roll(3);
+const castReset = () => {
+  $('cast-out').textContent = '-';
+  $('cast-detail').textContent = '输入 STR 后掷骰，统计 3+ 的骰子数';
+};
 </script>
 </body>
 </html>
