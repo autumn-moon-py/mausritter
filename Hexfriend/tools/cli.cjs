@@ -17,7 +17,7 @@ const PUB = path.join(ROOT, 'public')
 const MAP_FILES = [
   path.join(PUB, '秋烬河谷.hexfriend'),
   path.join(PUB, 'qiujin-river-valley.hexfriend'),
-  path.join('/Users/mac/worker/日志/mausritter/战役', '秋烬河谷.hexfriend'),
+  path.join('/Users/mac/worker/日志/mausritter/战役/战役', '秋烬河谷.hexfriend'),
 ]
 const HEX_H = 43.3
 const PNG_JSON = '/tmp/icons-png.json'
@@ -186,9 +186,9 @@ function previewSetup(serveStatic) {
     console.log('[preview] 静态服务器 8765 就绪，预览地址 http://localhost:8765/map-preview.png')
   }
   console.log('[preview] 渲染指引：浏览器打开 http://localhost:5173/?map=秋烬河谷.hexfriend，执行')
-  console.log('  const a=globalThis.__PIXI_APP__; a.renderer.render(a.stage); window.__png=a.renderer.view.toDataURL("image/png");')
+  console.log('  window.__png=await globalThis.__hexfriend_export_png();')
   console.log('  fetch("http://localhost:8900/save",{method:"POST",body:window.__png})')
-  console.log('  然后打开 http://localhost:8765/map-preview.png 查看')
+  console.log('  然后打开 http://localhost:8765/map-preview.png 查看（已按地图内容自动裁剪，无多余透明留白）')
   return recv
 }
 

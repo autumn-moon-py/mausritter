@@ -38,8 +38,6 @@ body { font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif
   <div class="tabs">
     <div class="tab active" onclick="switchTab('hex')">六角格</div>
     <div class="tab" onclick="switchTab('settle')">定居点</div>
-    <div class="tab" onclick="switchTab('season')">季节与流言</div>
-    <div class="tab" onclick="switchTab('hook')">起始钩子</div>
   </div>
 
   <!-- 六角格 -->
@@ -115,56 +113,6 @@ body { font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif
     <div class="output" id="settle-output">点击生成</div>
     <button class="btn copy" onclick="copyOutput('settle-output')">复制结果</button>
   </div>
-
-  <!-- 季节与流言 -->
-  <div id="panel-season" class="panel">
-    <div class="section">
-      <h3>季节天气与事件</h3>
-      <div class="radio-row">
-        <label><input type="radio" name="season" value="spring" checked>春</label>
-        <label><input type="radio" name="season" value="summer">夏</label>
-        <label><input type="radio" name="season" value="autumn">秋</label>
-        <label><input type="radio" name="season" value="winter">冬</label>
-        <button class="btn" onclick="rollSeason()">掷天气</button>
-      </div>
-      <div class="row">
-        <span class="label">天气 2d6</span>
-        <span class="die" id="w-dice">-</span>
-        <span class="lookup" id="w-weather">-</span>
-      </div>
-      <div class="row">
-        <span class="label">季节事件</span>
-        <button class="btn ghost" onclick="rollSeasonEvent()">d6</button>
-        <span class="die" id="w-event">-</span>
-        <span class="lookup" id="l-event2">d6</span>
-      </div>
-      <div class="hint" style="font-size:0.8rem;color:#888">恶劣天气旅行需 STR 豁免，否则疲惫</div>
-    </div>
-    <div class="section">
-      <h3>流言真实度</h3>
-      <div class="row">
-        <span class="label">流言 d6</span>
-        <button class="btn ghost" onclick="rollRumor()">d6</button>
-        <span class="die" id="r-dice">-</span>
-        <span class="lookup" id="r-text">d6</span>
-      </div>
-    </div>
-  </div>
-
-  <!-- 起始钩子 -->
-  <div id="panel-hook" class="panel">
-    <div class="section">
-      <h3>冒险地点起始钩子</h3>
-      <div class="row">
-        <span class="label">钩子 d6</span>
-        <button class="btn ghost" onclick="rollHook()">d6</button>
-        <span class="die" id="k-dice">-</span>
-        <span class="lookup" id="k-text">d6</span>
-      </div>
-      <div class="output" id="hook-output" style="margin-top:10px">点击掷骰</div>
-      <button class="btn copy" onclick="copyOutput('hook-output')">复制结果</button>
-    </div>
-  </div>
 </div>
 
 <script>
@@ -198,20 +146,7 @@ const T = {
   suffixB: ["林","丘","塔","农","桥","门","溪","池","巢","渡","墓","溪流"],
   tavernA: ["白色","绿色","黑色","红色","银色","弯曲","友好","隐秘","狡猾","玻璃","多刺","破碎"],
   tavernB: ["甲虫","狐狸","楔子","谷粒","鼠","奶酪","鹰","虫","蜜蜂","灯笼","玫瑰","骑士"],
-  dish: ["香料烤胡萝卜","水煮蠕虫汤","黑莓馅饼","浓味陈年奶酪","大麦粥","厚切河鱼排","烤苹果","油炸裹面包屑虫腿","新鲜黄油面包","拾荒糖果","蜜烤种子","蘑菇炖菜"],
-  weather: {
-    spring:["暴风雨","毛毛雨","阴天","明媚晴朗","晴朗温暖"],
-    summer:["雷暴","酷热","晴朗炎热","宜人晴朗","美丽温暖"],
-    autumn:["狂风","大雨","凉爽","阵雨","晴朗清爽"],
-    winter:["暴风雪","雨夹雪","严寒","阴天","晴朗清爽"]
-  },
-  sevevent: {
-    spring:["洪水冲走了一个重要的地标","母鸟，非常保护她的蛋","商人的车陷在泥潭中","迁徙的蝴蝶，渴望花蜜","老鼠编织花环，为庆典做准备","婚礼节庆，欢乐的游行"],
-    summer:["热浪使下周的旅行令人疲惫","幼鸟，从巢中坠落","宜人清爽的太阳雨","蝗虫群摧毁了一个定居点的庄稼","老鼠制作精致的服装，为庆典做准备","仲夏节，狂野的舞蹈"],
-    autumn:["一棵重要的树被狂风吹倒","母鸟，因孩子离家而心烦意乱","一大片蘑菇一夜之间冒出","传言附近长着松露","老鼠搬运一捆捆谷物并烤馅饼，为庆典做准备","丰收节，盛大的宴席"],
-    winter:["大雪阻止地面移动一周","翅膀折断的鸟，年老灰暗","迷路的迁徙鸭子，与鸭群失散","旅行者在快速移动的风暴中消失","老鼠制作冬日老人的模拟像，为庆典做准备","仲冬节，壮观的篝火"]
-  },
-  hook: ["寻找失踪的家庭成员","奉贵族鼠之命进行调查","老鼠巫师需要一种特定的法术成分","此处是骚扰定居点的生物巢穴","追随一份继承的藏宝图","为躲避可怕的暴风雨而寻找庇护所"]
+  dish: ["香料烤胡萝卜","水煮蠕虫汤","黑莓馅饼","浓味陈年奶酪","大麦粥","厚切河鱼排","烤苹果","油炸裹面包屑虫腿","新鲜黄油面包","拾荒糖果","蜜烤种子","蘑菇炖菜"]
 };
 
 function switchTab(name){
@@ -262,34 +197,6 @@ function rollSettlement(){
   $('s-name').textContent = vals.nameA+'/'+vals.nameB; $('l-name').textContent = T.nameA[vals.nameA-1]+T.suffixA[vals.suffix-1] + ' 或 ' + T.nameB[vals.nameB-1]+T.suffixB[vals.suffix-1];
   $('s-tavern').textContent = vals.tavA+'/'+vals.tavB+'/'+vals.dish; $('l-tavern').textContent = T.tavernA[vals.tavA-1]+T.tavernB[vals.tavB-1]+'（'+T.dish[vals.dish-1]+'）';
   $('settle-output').textContent = `=== 定居点 ===\n\n规模：${T.scale[s-1]}\n治理：${T.gov[govIdx]}\n居民习俗：${T.custom[vals.custom-1]}\n显著特征：${T.feature[vals.feature-1]}\n产业：${T.industry[vals.industry-1]}\n当前事件：${T.event[vals.event-1]}\n命名：${T.nameA[vals.nameA-1]}${T.suffixA[vals.suffix-1]} / ${T.nameB[vals.nameB-1]}${T.suffixB[vals.suffix-1]}\n酒馆：${T.tavernA[vals.tavA-1]}${T.tavernB[vals.tavB-1]}（${T.dish[vals.dish-1]}）`;
-}
-
-// 季节
-function seasonOf(){ return document.querySelector('input[name="season"]:checked').value; }
-function rollSeason(){
-  const s = seasonOf();
-  const r = roll(6)+roll(6);
-  const idx = r===2?0 : r<=5?1 : r<=8?2 : r<=11?3 : 4;
-  $('w-dice').textContent = r;
-  $('w-weather').textContent = T.weather[s][idx];
-}
-function rollSeasonEvent(){
-  const s = seasonOf(), r = roll(6);
-  $('w-event').textContent = r;
-  $('l-event2').textContent = T.sevevent[s][r-1];
-}
-function rollRumor(){
-  const r = roll(6);
-  $('r-dice').textContent = r;
-  $('r-text').textContent = r<=3?'真实':r<=5?'部分真实':'虚假';
-}
-
-// 钩子
-function rollHook(){
-  const r = roll(6);
-  $('k-dice').textContent = r;
-  $('k-text').textContent = T.hook[r-1];
-  $('hook-output').textContent = `起始钩子：d6=${r} → ${T.hook[r-1]}`;
 }
 
 function copyOutput(id){

@@ -74,7 +74,7 @@ npm run map:preview                     # 启动预览链路（接收 8900 + 静
 
 - `Hexfriend/public/秋烬河谷.hexfriend`（dev server 用 `?map=` 加载）
 - `Hexfriend/public/qiujin-river-valley.hexfriend`
-- `战役/秋烬河谷.hexfriend`
+- `战役/战役/秋烬河谷.hexfriend`
 
 `layout / icons / sync` 默认同步全部 3 份；传单个文件路径则只改那一份。
 

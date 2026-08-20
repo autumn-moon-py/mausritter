@@ -58,7 +58,7 @@ const tools = [
   },
   {
     name: 'map_sync',
-    description: '把主地图文件（public/秋烬河谷.hexfriend）同步复制到其余两份（public/qiujin-river-valley.hexfriend 与 战役/秋烬河谷.hexfriend）。',
+    description: '把主地图文件（public/秋烬河谷.hexfriend）同步复制到其余两份（public/qiujin-river-valley.hexfriend 与 战役/战役/秋烬河谷.hexfriend）。',
     inputSchema: {
       type: 'object',
       properties: { from: { type: 'string', description: '源文件路径，默认主文件' } },
@@ -121,8 +121,8 @@ function callTool(name, args) {
     case 'map_preview_setup':
       cli.previewSetup(args.serve)
       return '预览接收服务器已启动(8900)。渲染步骤：浏览器打开 http://localhost:5173/?map=秋烬河谷.hexfriend 后执行 ' +
-        'const a=globalThis.__PIXI_APP__; a.renderer.render(a.stage); window.__png=a.renderer.view.toDataURL("image/png"); ' +
-        'fetch("http://localhost:8900/save",{method:"POST",body:window.__png})；然后查看 http://localhost:8765/map-preview.png'
+        'window.__png=await globalThis.__hexfriend_export_png(); ' +
+        'fetch("http://localhost:8900/save",{method:"POST",body:window.__png})；然后查看 http://localhost:8765/map-preview.png（已按地图内容自动裁剪，无多余透明留白）'
     case 'generate_hexmap':
       return (async () => {
         const desc = args.description

@@ -259,6 +259,22 @@
     showLoader = false
   }
 
+  // 供 tools/cli.cjs 与 MCP 预览链路调用：按地图内容包围盒导出 PNG。
+  // 相比 a.renderer.view.toDataURL 抓整幅画布，extract.base64 只渲染 offsetContainer
+  // 的实际内容区域，自动裁剪掉周围透明留白；并按当前缩放倍率输出以保持清晰度。
+  // @ts-ignore
+  globalThis.__hexfriend_export_png = async () => {
+    const zoom = Math.max(1, offsetContainer.scale.x)
+    // backgroundAlpha: 0 + clearBeforeRender 显式保证导出背景透明（extract 走 clear=false，
+    // 但新 renderer 显式声明，避免任何环境默认白/黑底兜底）
+    const renderer = new PIXI.Renderer({ resolution: zoom, antialias: true, backgroundAlpha: 0, clearBeforeRender: true })
+    try {
+      return await renderer.extract.base64(offsetContainer)
+    } finally {
+      renderer.destroy()
+    }
+  }
+
   function redrawEntireMap() {
     // Refreshes all hexes and coordinates
     comp_terrainLayer.renderAllHexes()
