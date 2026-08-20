@@ -4,41 +4,37 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Mausritter 主持人速查表</title>
-<style>
-* { margin:0; padding:0; box-sizing:border-box; }
-body { font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; background:#fff; color:#1a1a1a; padding:8px; }
-.container { max-width:1700px; margin:0 auto; }
-.grid { columns:3; column-gap:8px; }
-.card { background:#f7f7f7; border:1px solid #e0e0e0; border-radius:4px; padding:10px; margin-bottom:8px; break-inside:avoid; -webkit-column-break-inside:avoid; }
-.card h3 { font-size:0.85rem; font-weight:700; margin-bottom:6px; padding-bottom:4px; border-bottom:1px solid #dcdcdc; }
-.row { display:flex; gap:6px; align-items:center; flex-wrap:wrap; margin-bottom:5px; }
-@media (max-width:900px){ .grid{columns:2;} }
-@media (max-width:600px){ .grid{columns:1;} }
-.btn { background:#2a2a2a; color:#fff; border:0; border-radius:4px; padding:5px 12px; font-size:0.85rem; cursor:pointer; transition:background .15s; }
-.btn:hover { background:#444; }
-.btn.ghost { background:#fff; color:#2a2a2a; border:1px solid #bbb; }
-.btn.ghost:hover { background:#eee; }
-.out { font-weight:700; min-width:70px; text-align:center; background:#fff; border:1px solid #ddd; border-radius:4px; padding:5px 8px; font-size:0.9rem; }
-.note { font-size:0.82rem; color:#555; flex:1; min-width:140px; }
-.hint { font-size:0.78rem; color:#999; }
-.rule { font-size:0.83rem; color:#333; line-height:1.7; }
-.rule b { color:#111; }
-table { width:100%; border-collapse:collapse; font-size:0.83rem; }
-th,td { padding:4px 6px; border-bottom:1px solid #e3e3e3; text-align:left; }
-th { color:#555; font-weight:600; background:#f0f0f0; }
-.succ { color:#1a7f37; font-weight:700; }
-.fail { color:#c62828; font-weight:700; }
-.enc-hint { display:none; color:#c62828; font-weight:700; font-size:0.85rem; margin-top:6px; padding:5px 8px; background:#fdecec; border:1px solid #f2c4c4; border-radius:4px; }
-input { background:#fff; border:1px solid #ccc; border-radius:4px; padding:5px; width:54px; text-align:center; font-size:0.9rem; }
-.radio-row { display:flex; gap:12px; align-items:center; font-size:0.85rem; margin-bottom:6px; }
-.radio-row label { display:flex; gap:4px; align-items:center; cursor:pointer; }
-.big-num { font-size:1.2rem; }
-</style>
+<link rel="stylesheet" href="static/cheatsheet.css?v=4">
 </head>
 <body>
 <div class="container">
   <div class="grid">
-    <!-- 遭遇检定 -->
+
+    <!-- 常用骰面（第一位） -->
+    <div class="card">
+      <h3>常用骰面</h3>
+      <div class="dice-grid">
+        <button class="btn" onclick="rollD4()">d4</button>
+        <button class="btn" onclick="rollD6()">d6</button>
+        <button class="btn" onclick="rollD8()">d8</button>
+        <button class="btn" onclick="rollD10()">d10</button>
+        <button class="btn" onclick="rollD12()">d12</button>
+        <button class="btn" onclick="rollD20()">d20</button>
+        <button class="btn" onclick="rollD100()">d100</button>
+        <button class="btn" onclick="roll2d6()">2d6</button>
+      </div>
+      <div class="row" style="margin-top:8px">
+        <span class="note" style="min-width:auto">自定义</span>
+        <input type="number" id="dice-count" min="1" max="20" value="1" style="width:46px">
+        <span>d</span>
+        <input type="number" id="dice-sides" min="2" max="1000" value="6" style="width:54px">
+        <button class="btn ghost" onclick="rollCustom()">掷</button>
+      </div>
+      <div class="dice-last" id="dice-last">—</div>
+      <div class="hint">点骰子按钮触发，最后一次结果显示在下方；自定义支持 N × dN（含 d3/d5/d7 等任意面数）。</div>
+    </div>
+
+    <!-- 遭遇检定（含遭遇表导入） -->
     <div class="card">
       <h3>遭遇检定</h3>
       <div class="row">
@@ -62,18 +58,31 @@ input { background:#fff; border:1px solid #ccc; border-radius:4px; padding:5px; 
         <span class="out" id="hour">-</span>
         <span class="out" id="wild-enc" style="display:none">-</span>
       </div>
-      <div class="hint">1-2=遭遇 · 3-6=无事；d12 定遭遇时刻<br>遭遇时掷 d6 定具体遭遇，查冒险地点文件内的遭遇表</div>
+      <div class="hint">1-2=遭遇 · 3-6=无事；d12 定遭遇时刻<br>遭遇时掷 d6 定具体遭遇。</div>
+
+      <h3 style="margin-top:12px">遭遇表导入</h3>
+      <div class="row">
+        <button class="btn ghost" onclick="loadSampleEncounterTable()">载入示例</button>
+        <button class="btn" onclick="importEncounterTable()">解析</button>
+        <button class="btn ghost" onclick="clearEncounterTable()">清空</button>
+        <span class="note" id="enc-table-status">未导入，使用默认随机条目</span>
+      </div>
+      <textarea class="enc-table-input" id="enc-table-input" placeholder="粘贴 markdown 表格：&#10;| d6 | 遭遇 |&#10;| --- | --- |&#10;| 1 | ... |"></textarea>
+      <div class="enc-table-preview" id="enc-table-preview" style="display:none"></div>
+      <div class="hint">导入后，触发遭遇时会自动从表中抽取对应条目显示在遭遇行尾；若未导入则只显示 #N。</div>
     </div>
 
     <!-- 反应与士气 -->
     <div class="card">
       <h3>反应表</h3>
-      <div class="row">
-        <span class="note">态度不明显的生物</span>
-        <button class="btn" onclick="rollReaction()">2d6</button>
-        <span class="out" id="reac">-</span>
-      </div>
-      <div class="rule" id="reac-text">—</div>
+      <table>
+        <tr><th>2d6</th><th>态度</th><th>问题</th></tr>
+        <tr><td>2</td><td>敌对</td><td>老鼠怎么惹怒了它们？</td></tr>
+        <tr><td>3–5</td><td>不友好</td><td>如何才能安抚它们？</td></tr>
+        <tr><td>6–8</td><td>不确定</td><td>什么能赢得它们？</td></tr>
+        <tr><td>9–11</td><td>健谈</td><td>它们想交易什么？</td></tr>
+        <tr><td>12</td><td>友善</td><td>它们怎么帮助老鼠？</td></tr>
+      </table>
       <h3 style="margin-top:14px">士气检定</h3>
       <div class="rule">对手满足任一条件，须 <b>WIL 豁免</b>，失败则逃跑或投降：<br>• 开局明显劣势<br>• 首次受重击<br>• 看到盟友逃跑或倒下</div>
     </div>
@@ -164,88 +173,43 @@ input { background:#fff; border:1px solid #ccc; border-radius:4px; padding:5px; 
       <h3 style="margin-top:14px">物品栏</h3>
       <div class="rule"><b>5 个背包格</b>，装备中的物品不占格。战斗中从背包取物需 DEX 豁免。</div>
     </div>
+
+    <!-- 战斗数据（导入 + 候选 + 战斗区） -->
+    <div class="card">
+      <h3>战斗数据</h3>
+      <div class="row">
+        <button class="btn ghost" onclick="loadSampleCombat()">载入示例</button>
+        <button class="btn" onclick="importCombatFromTextarea()">解析导入</button>
+      </div>
+      <textarea class="combat-input" id="combat-input" placeholder="粘贴战斗数据，支持多个角色块：&#10;&#10;## 鼠帮成员&#10;```&#10;HP 3/3 STR 12 DEX 8 WIL 8&#10;攻击：d6 切肉刀&#10;欲望：...&#10;```&#10;&#10;## 老钳&#10;..."></textarea>
+
+      <h3 style="margin-top:10px">候选池（基准）</h3>
+      <div id="cand-list">
+        <div class="hint" style="padding:6px">尚未导入，先在下方粘贴角色数据，然后「解析」。</div>
+      </div>
+
+      <h3 style="margin-top:10px">战斗区</h3>
+      <div id="combat-list">
+        <div class="hint" style="padding:6px">战斗区为空，点候选区的「加入战斗」即可。</div>
+      </div>
+      <div class="hint">加入战斗：第 1 次同名显示「基准名」，再点同名则显示「基准名-2」「-3」…候选行尾会标"已加 N"。战斗卡可改名、±N 调 HP / STR / DEX / WIL、备注状态；展开 ▸ 查看原始数据。</div>
+    </div>
+
+    <!-- 备忘录 -->
+    <div class="card">
+      <h3>备忘录</h3>
+      <textarea class="memo" id="memo" placeholder="随手记录：悬念、NPC 名字、待办……每 0.4s 自动保存到本地"></textarea>
+      <div class="row" style="margin-top:6px">
+        <button class="btn ghost" id="memo-clear">清空</button>
+        <button class="btn ghost" id="memo-export">导出 .txt</button>
+        <span class="memo-status" id="memo-status"></span>
+      </div>
+      <div class="hint">自动写入 localStorage。换浏览器/清除站点数据会丢失，记得重要内容导出。</div>
+    </div>
+
   </div>
 </div>
 
-<script>
-const roll = s => Math.floor(Math.random()*s)+1;
-const sum3 = () => roll(6)+roll(6)+roll(6);
-const $ = id => document.getElementById(id);
-
-// 探索轮
-let turn = 0;
-const updateEncHint = () => { $('enc-hint').style.display = (turn>0 && turn%3===0) ? 'block' : 'none'; };
-const turnAdd = n => { turn = Math.max(0, turn+n); $('turn').textContent = turn; updateEncHint(); };
-const turnReset = () => { turn = 0; $('turn').textContent = '0'; updateEncHint(); };
-
-// 遭遇（自动掷出具体遭遇 d6，遇袭时显示）
-function rollDungeon(){
-  const r=roll(6);
-  $('dun').textContent = `${r} · ${r<=2?'遭遇':'无事'}`;
-  if(r<=2){ $('dun-enc').textContent = `遭遇 #${roll(6)}`; $('dun-enc').style.display='inline-block'; }
-  else { $('dun-enc').style.display='none'; }
-}
-function rollWild(){
-  const r=roll(6);
-  $('wild').textContent = `${r} · ${r<=2?'遭遇':'无事'}`;
-  if(r<=2){ $('wild-enc').textContent = `遭遇 #${roll(6)}`; $('wild-enc').style.display='inline-block'; }
-  else { $('wild-enc').style.display='none'; }
-}
-const rollHour = () => $('hour').textContent = `${roll(12)} 时`;
-
-// 反应表
-function rollReaction(){
-  const r = roll(6)+roll(6);
-  $('reac').textContent = r;
-  const t = r===2?'敌对。老鼠怎么惹怒了它们？'
-    : r<=5?'不友好。如何才能安抚它们？'
-    : r<=8?'不确定。什么能赢得它们？'
-    : r<=11?'健谈。它们想交易什么？'
-    : '友善。它们怎么帮助老鼠？';
-  $('reac-text').textContent = t;
-}
-
-// 豁免：普通3d6；优势6d6取3低，劣势6d6取3高
-const sum6 = () => Array.from({length:6}, () => roll(6)).sort((a,b)=>a-b);
-function rollSave(){
-  const mode = document.querySelector('input[name="adv"]:checked').value;
-  let t;
-  if(mode==='normal') t = sum3();
-  else { const d = sum6(); t = mode==='adv' ? d.slice(0,3).reduce((a,b)=>a+b,0) : d.slice(3).reduce((a,b)=>a+b,0); }
-  $('save').textContent = t;
-  judge();
-}
-function judge(){
-  const stat = parseInt($('stat').value)||9;
-  const n = parseInt($('save').textContent);
-  const el = $('save-judge');
-  if(isNaN(n)){ el.textContent='3d6 ≤ 属性则成功'; el.className='note'; return; }
-  if(n<=stat){ el.textContent=`成功（${n}≤${stat}）`; el.className='note succ'; }
-  else { el.textContent=`失败（${n}>${stat}）`; el.className='note fail'; }
-}
-
-// 幸运骰
-function rollLuck(){
-  const x = parseInt($('luckx').value)||3, r = roll(6);
-  $('luck').textContent = `${r} · ${r<=x?'发生':'未发生'}`;
-}
-
-// 施法：掷 WIL 颗 d6，统计 3+ 数量；掷出 1 且总值 < 原 WIL 则失控
-function rollCast(){
-  const wil = parseInt($('cast').value)||9;
-  const dice = Array.from({length:wil}, () => roll(6));
-  const diceNum = dice.filter(d => d>=3).length;
-  const total = dice.reduce((a,b) => a+b, 0);
-  const lost = dice.includes(1) && total < wil;
-  $('cast-out').textContent = `${diceNum} dice`;
-  $('cast-detail').innerHTML = lost
-    ? `<span class="fail">失控！施法失败</span> · 掷 ${wil} 颗 d6：${dice.join(' ')} → [DICE]=${diceNum}`
-    : `掷 ${wil} 颗 d6：${dice.join(' ')} → [DICE]=${diceNum}`;
-}
-const castReset = () => {
-  $('cast-out').textContent = '-';
-  $('cast-detail').textContent = '输入 WIL 后掷骰，统计 3+ 的骰子数';
-};
-</script>
+<script type="module" src="static/js/main.js?v=5"></script>
 </body>
 </html>
