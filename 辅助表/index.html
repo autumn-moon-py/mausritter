@@ -12,64 +12,59 @@
 
     <!-- 常用骰面（第一位） -->
     <div class="card">
-      <h3>常用骰面</h3>
+      <div class="card-head">
+        <h3>常用骰面</h3>
+        <button class="btn ghost reset-btn" onclick="diceReset()">重置</button>
+      </div>
       <div class="dice-grid">
+        <button class="btn" onclick="rollD3()">d3</button>
         <button class="btn" onclick="rollD4()">d4</button>
         <button class="btn" onclick="rollD6()">d6</button>
         <button class="btn" onclick="rollD8()">d8</button>
         <button class="btn" onclick="rollD10()">d10</button>
         <button class="btn" onclick="rollD12()">d12</button>
-        <button class="btn" onclick="rollD20()">d20</button>
-        <button class="btn" onclick="rollD100()">d100</button>
         <button class="btn" onclick="roll2d6()">2d6</button>
+        <button class="btn" onclick="roll3d6()">3d6</button>
       </div>
       <div class="row" style="margin-top:8px">
-        <span class="note" style="min-width:auto">自定义</span>
-        <input type="number" id="dice-count" min="1" max="20" value="1" style="width:46px">
+        <input type="number" id="dice-count" min="1" max="20" value="1" style="width:36px">
         <span>d</span>
-        <input type="number" id="dice-sides" min="2" max="1000" value="6" style="width:54px">
+        <input type="number" id="dice-sides" min="2" max="1000" value="6" style="width:44px">
         <button class="btn ghost" onclick="rollCustom()">掷</button>
+        <span class="out" id="dice-last" style="min-width:auto;padding:5px 8px"></span>
       </div>
-      <div class="dice-last" id="dice-last">—</div>
-      <div class="hint">点骰子按钮触发，最后一次结果显示在下方；自定义支持 N × dN（含 d3/d5/d7 等任意面数）。</div>
     </div>
 
     <!-- 遭遇检定（含遭遇表导入） -->
     <div class="card">
-      <h3>遭遇检定</h3>
-      <div class="row">
-        <span class="out big-num" id="turn">0</span>
-        <button class="btn" onclick="turnAdd(1)">+1 探索轮</button>
-        <button class="btn ghost" onclick="turnAdd(-1)">-1</button>
-        <button class="btn ghost" onclick="turnReset()">重置</button>
+      <div class="card-head">
+        <h3>时间管理</h3>
+        <button class="btn ghost reset-btn" onclick="turnReset()">重置</button>
       </div>
-      <div class="enc-hint" id="enc-hint">该触发遭遇检定</div>
-      <div class="row">
-        <span class="note">地下城：每3探索轮或制造动静</span>
+      <div class="row" style="flex-wrap:nowrap">
+        <span style="font-size:.82rem;color:#555">探索轮</span>
+        <span class="out big-num" id="turn">0</span>
+        <button class="btn" onclick="turnAdd(1)">+1</button>
+        <button class="btn ghost" onclick="turnAdd(-1)">-1</button>
+      </div>
+      <div class="row" style="margin-top:2px;flex-wrap:nowrap">
+        <span style="font-size:.82rem;color:#555">守望</span>
+        <input type="number" id="watch" value="2">
+        <span class="out" id="watch-name" style="min-width:auto;padding:5px 8px">凌晨</span>
+      </div>
+      <div class="row" style="flex-wrap:nowrap">
+        <span id="enc-trigger" style="font-size:.82rem;color:#555">遭遇检定</span>
         <button class="btn" onclick="rollDungeon()">d6</button>
         <span class="out" id="dun">-</span>
         <span class="out" id="dun-enc" style="display:none">-</span>
       </div>
-      <div class="row">
-        <span class="note">荒野：晨/暮守望开始</span>
-        <button class="btn" onclick="rollWild()">d6</button>
-        <span class="out" id="wild">-</span>
-        <button class="btn ghost" onclick="rollHour()">d12</button>
-        <span class="out" id="hour">-</span>
-        <span class="out" id="wild-enc" style="display:none">-</span>
-      </div>
-      <div class="hint">1-2=遭遇 · 3-6=无事；d12 定遭遇时刻<br>遭遇时掷 d6 定具体遭遇。</div>
 
       <h3 style="margin-top:12px">遭遇表导入</h3>
       <div class="row">
-        <button class="btn ghost" onclick="loadSampleEncounterTable()">载入示例</button>
-        <button class="btn" onclick="importEncounterTable()">解析</button>
+        <button class="btn" onclick="importEncounterTable()">导入</button>
         <button class="btn ghost" onclick="clearEncounterTable()">清空</button>
-        <span class="note" id="enc-table-status">未导入，使用默认随机条目</span>
       </div>
-      <textarea class="enc-table-input" id="enc-table-input" placeholder="粘贴 markdown 表格：&#10;| d6 | 遭遇 |&#10;| --- | --- |&#10;| 1 | ... |"></textarea>
       <div class="enc-table-preview" id="enc-table-preview" style="display:none"></div>
-      <div class="hint">导入后，触发遭遇时会自动从表中抽取对应条目显示在遭遇行尾；若未导入则只显示 #N。</div>
     </div>
 
     <!-- 反应与士气 -->
@@ -139,13 +134,15 @@
 
     <!-- 施法 -->
     <div class="card">
-      <h3>施法</h3>
+      <div class="card-head">
+        <h3>施法</h3>
+        <button class="btn ghost reset-btn" onclick="castReset()">重置</button>
+      </div>
       <div class="rule">握着石板，消耗 <b>1 点 WIL</b>，掷 WIL 颗 d6。<br>[DICE] = 显示 3+ 的骰子数。</div>
       <div class="row" style="margin-top:8px">
         <span class="note">WIL 值</span>
         <input type="number" id="cast" min="1" max="18" value="9">
         <button class="btn" onclick="rollCast()">掷施法</button>
-        <button class="btn ghost" onclick="castReset()">重置</button>
         <span class="out" id="cast-out">-</span>
       </div>
       <div class="rule" id="cast-detail" style="margin-top:6px">输入 WIL 后掷骰，统计 3+ 的骰子数</div>

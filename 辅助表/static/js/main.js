@@ -13,13 +13,10 @@ window.turnReset = Enc.turnReset;
 
 // 遭遇
 window.rollDungeon = Enc.rollDungeon;
-window.rollWild    = Enc.rollWild;
-window.rollHour    = Enc.rollHour;
 
 // 遭遇表
 window.importEncounterTable    = EncTable.importEncounterTable;
 window.clearEncounterTable     = EncTable.clearEncounterTable;
-window.loadSampleEncounterTable= EncTable.loadSampleEncounterTable;
 
 // 豁免
 window.rollSave = Save.rollSave;
@@ -31,13 +28,13 @@ window.rollCast   = Cast.rollCast;
 window.castReset  = Cast.castReset;
 
 // 常用骰面
+window.rollD3   = () => showDice(Dice.rollD3());
 window.rollD4   = () => showDice(Dice.rollD4());
 window.rollD6   = () => showDice(Dice.rollD6());
 window.rollD8   = () => showDice(Dice.rollD8());
 window.rollD10  = () => showDice(Dice.rollD10());
 window.rollD12  = () => showDice(Dice.rollD12());
-window.rollD20  = () => showDice(Dice.rollD20());
-window.rollD100 = () => showDice(Dice.rollD100());
+window.roll3d6  = () => showDice(Dice.roll3d6());
 window.roll2d6  = () => showDice(Dice.roll2d6());
 window.rollCustom = () => {
   const s = parseInt(document.getElementById('dice-sides').value);
@@ -48,8 +45,33 @@ window.rollCustom = () => {
 
 function showDice(r) {
   const el = document.getElementById('dice-last');
-  if (el) el.textContent = `${r.text}（${r.dice.join(' + ')}）`;
+  if (el) el.textContent = r.text;
 }
+
+window.diceReset = () => {
+  const el = document.getElementById('dice-last');
+  if (el) el.textContent = '';
+  const count = document.getElementById('dice-count');
+  if (count) count.value = 1;
+  const sides = document.getElementById('dice-sides');
+  if (sides) sides.value = 6;
+};
+
+// 守望：1-4 对应凌晨/早上/下午/晚上，循环
+const WATCH_NAMES = { 1: '凌晨', 2: '早上', 3: '下午', 4: '晚上' };
+const updateWatch = () => {
+  const inp = document.getElementById('watch');
+  const out = document.getElementById('watch-name');
+  if (!inp || !out) return;
+  let v = parseInt(inp.value);
+  if (!Number.isFinite(v)) v = 1;
+  // 循环：4 → 1，1 → 4
+  if (v > 4) v = 1;
+  else if (v < 1) v = 4;
+  inp.value = v;
+  out.textContent = WATCH_NAMES[v];
+};
+window.updateWatch = updateWatch;
 
 // 战斗数据
 window.importCombatFromTextarea = Combat.importCombatFromTextarea;
@@ -57,4 +79,11 @@ window.loadSampleCombat         = Combat.loadSampleCombat;
 
 // 备忘录
 window.initMemo = initMemo;
-document.addEventListener('DOMContentLoaded', initMemo);
+document.addEventListener('DOMContentLoaded', () => {
+  initMemo();
+  const w = document.getElementById('watch');
+  if (w) {
+    w.addEventListener('input', updateWatch);
+    updateWatch();
+  }
+});
